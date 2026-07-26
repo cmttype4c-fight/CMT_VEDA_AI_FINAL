@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CMT Veda AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0f14;
+    --panel: #10141b;
+    --panel-raised: #151a22;
+    --border: #232a35;
+    --text: #e8eaed;
+    --text-soft: #9aa4b2;
+    --text-faint: #6b7482;
+    --accent-red: #e0473f;
+    --accent-orange: #f0a13a;
+    --accent-purple-1: #7c5cff;
+    --accent-purple-2: #a78bfa;
+    --green-bg: #16261c;
+    --green-border: #234a30;
+    --green-text: #6fcf8f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ---------------- SIDEBAR ---------------- */
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 20px;
+  }
+
+  .field-label {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .help-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid var(--text-faint);
+    color: var(--text-faint);
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+  }
+
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .radio-group.row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    font-size: 14.5px;
+    color: var(--text);
+  }
+
+  .radio-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .radio-dot {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 1.5px solid #4a5464;
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color 0.15s ease;
+  }
+
+  .radio-option input:checked + .radio-dot {
+    border-color: var(--accent-red);
+  }
+
+  .radio-option input:checked + .radio-dot::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--accent-red);
+  }
+
+  .radio-option[data-group="usertype"] input:checked + .radio-dot::after {
+    background: var(--accent-purple-2);
+  }
+  .radio-option[data-group="usertype"] input:checked + .radio-dot {
+    border-color: var(--accent-purple-2);
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 8px 0 22px;
+  }
+
+  .sidebar h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0 0 14px;
+  }
+
+  .kb-stats {
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+    border-radius: 10px;
+    padding: 16px 16px;
+    color: var(--green-text);
+    font-size: 14.5px;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .sources-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  .sources-toggle:hover { border-color: #3a4353; }
+  .sources-toggle .chev {
+    transition: transform 0.15s ease;
+    color: var(--text-faint);
+    font-size: 12px;
+  }
+  .sources-toggle.open .chev { transform: rotate(90deg); }
+
+  .sources-list {
+    display: none;
+    margin-top: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .sources-list.open { display: block; }
+  .sources-list .src-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-soft);
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sources-list .src-item:last-child { border-bottom: none; }
+
+  /* ---------------- MAIN ---------------- */
+  .main {
+    padding: 40px 48px 24px;
+    display: flex;
+    flex-direction: column;
+    max-width: 980px;
+    width: 100%;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+
+  .om-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-purple-1), var(--accent-purple-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .masthead h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .sub {
+    color: var(--text-soft);
+    font-size: 14.5px;
+    margin: 0 0 28px;
+  }
+
+  #thread {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    flex: 1;
+    margin-bottom: 20px;
+  }
+
+  .turn { display: flex; flex-direction: column; gap: 14px; }
+
+  .msg-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .avatar.user { background: var(--accent-red); }
+  .avatar.bot { background: var(--accent-orange); }
+
+  .msg-content {
+    padding-top: 5px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .msg-row.user .msg-content {
+    font-weight: 600;
+  }
+
+  .answer-block {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .answer-block.pending { color: var(--text-soft); font-style: italic; }
+
+  .answer-block b, .answer-block strong { color: #fff; }
+  .answer-block table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+    font-size: 13.5px;
+  }
+  .answer-block th, .answer-block td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .answer-block th { background: #1a2029; color: var(--text); }
+
+  .sources-line {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  .sources-line span.chip {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-soft);
+  }
+
+  form#askForm {
+    position: sticky;
+    bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    padding: 8px 8px 8px 18px;
+  }
+
+  #question {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 10px 0;
+    color: var(--text);
+  }
+  #question::placeholder { color: var(--text-faint); }
+
+  button#sendBtn {
+    background: #2a3140;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+  }
+  button#sendBtn:hover { background: var(--accent-purple-1); }
+  button#sendBtn:disabled { background: #1d222b; color: #555; cursor: not-allowed; }
+
+  .status-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+  .status-line.error { color: var(--accent-red); }
+
+  .empty-state {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px 24px;
+    color: var(--text-soft);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .empty-state b { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .main { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h2>Settings</h2>
+
+      <p class="field-label">Answer length</p>
+      <div class="radio-group row" id="lengthGroup">
+        <label class="radio-option" data-group="length">
+          <input type="radio" name="length" value="short">
+          <span class="radio-dot"></span> short
+        </label>
+        <label class="radio-option" data-group="length">
+          <input type="radio" name="length" value="medium" checked>
+          <span class="radio-dot"></span> medium
+        </label>
+        <label class="radio-option" data-group="length">
+          <input type="radio" name="length" value="long">
+          <span class="radio-dot"></span> long
+        </label>
+      </div>
+
+      <p class="field-label">Table formatting <span class="help-dot" title="Controls whether tabular info (comparisons, subtype lists, etc.) is rendered as a Markdown table.">?</span></p>
+      <div class="radio-group" id="tableGroup">
+        <label class="radio-option" data-group="table">
+          <input type="radio" name="table" value="auto" checked>
+          <span class="radio-dot"></span> auto
+        </label>
+        <label class="radio-option" data-group="table">
+          <input type="radio" name="table" value="on">
+          <span class="radio-dot"></span> on
+        </label>
+        <label class="radio-option" data-group="table">
+          <input type="radio" name="table" value="off">
+          <span class="radio-dot"></span> off
+        </label>
+      </div>
+
+      <p class="field-label">User type <span class="help-dot" title="Adjusts terminology and depth to match your background.">?</span></p>
+      <div class="radio-group" id="userTypeGroup">
+        <label class="radio-option" data-group="usertype">
+          <input type="radio" name="usertype" value="student">
+          <span class="radio-dot"></span> student
+        </label>
+        <label class="radio-option" data-group="usertype">
+          <input type="radio" name="usertype" value="clinician" checked>
+          <span class="radio-dot"></span> clinician
+        </label>
+        <label class="radio-option" data-group="usertype">
+          <input type="radio" name="usertype" value="researcher">
+          <span class="radio-dot"></span> researcher
+        </label>
+      </div>
+
+      <hr class="divider">
+
+      <h3>Knowledge base</h3>
+      <div class="kb-stats" id="kbStats">Loading index stats…</div>
+
+      <button class="sources-toggle" id="sourcesToggle" type="button">
+        <span class="chev">›</span> Indexed sources (masked)
+      </button>
+      <div class="sources-list" id="sourcesList"></div>
+    </aside>
+
+    <main class="main">
+      <div class="masthead">
+        <div class="om-icon">🕉</div>
+        <h1>CMT Veda AI</h1>
+      </div>
+      <p class="sub">Answers are generated only from the documents you've ingested. Sources are shown in masked form.</p>
+
+      <div id="thread">
+        <div class="empty-state">
+          <b>No question asked yet.</b><br/>
+          Try something specific about CMT — a subtype, a gene, a symptom — that you know appears in the indexed documents.
+        </div>
+      </div>
+
+      <form id="askForm">
+        <input id="question" type="text" placeholder="Ask something about your documents…" autocomplete="off" />
+        <button id="sendBtn" type="submit">↑</button>
+      </form>
+      <div id="statusLine" class="status-line"></div>
+    </main>
+  </div>
+
+<script>
+  const thread = document.getElementById('thread');
+  const form = document.getElementById('askForm');
+  const input = document.getElementById('question');
+  const sendBtn = document.getElementById('sendBtn');
+  const statusLine = document.getElementById('statusLine');
+  const kbStats = document.getElementById('kbStats');
+  const sourcesToggle = document.getElementById('sourcesToggle');
+  const sourcesList = document.getElementById('sourcesList');
+  let firstQuestion = true;
+
+  function getSetting(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : null;
+  }
+
+  // ---- load knowledge base stats ----
+  async function loadStats() {
+    try {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      const chunkTxt = data.chunk_count != null ? data.chunk_count : '?';
+      kbStats.textContent = `${chunkTxt} chunks indexed from ${data.document_count} document(s)`;
+    } catch (e) {
+      kbStats.textContent = 'Could not load index stats.';
+    }
+  }
+
+  async function loadSources() {
+    try {
+      const res = await fetch('/api/sources');
+      const data = await res.json();
+      sourcesList.innerHTML = (data.sources || [])
+        .map(s => `<div class="src-item">${escapeHtml(s)}</div>`)
+        .join('') || '<div class="src-item">No sources indexed.</div>';
+    } catch (e) {
+      sourcesList.innerHTML = '<div class="src-item">Could not load sources.</div>';
+    }
+  }
+
+  sourcesToggle.addEventListener('click', () => {
+    sourcesToggle.classList.toggle('open');
+    sourcesList.classList.toggle('open');
+  });
+
+  loadStats();
+  loadSources();
+
+  // ---- very small markdown renderer: bold + simple pipe tables ----
+  function renderMarkdown(text) {
+    let html = escapeHtml(text);
+
+    // tables: lines starting with |
+    const lines = html.split('\n');
+    let out = [];
+    let i = 0;
+    while (i < lines.length) {
+      if (lines[i].trim().startsWith('|')) {
+        let tableLines = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          tableLines.push(lines[i]);
+          i++;
+        }
+        out.push(mdTableToHtml(tableLines));
+      } else {
+        out.push(lines[i]);
+        i++;
+      }
+    }
+    html = out.join('\n');
+
+    html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    html = html.replace(/\n{2,}/g, '</p><p>');
+    html = '<p>' + html.replace(/\n/g, '<br>') + '</p>';
+    return html;
+  }
+
+  function mdTableToHtml(tableLines) {
+    const rows = tableLines
+      .map(l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()));
+    if (rows.length < 2) return tableLines.join('<br>');
+    const header = rows[0];
+    const body = rows.slice(1).filter(r => !r.every(c => /^-+$/.test(c)));
+    let html = '<table><thead><tr>' + header.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+    body.forEach(r => {
+      html += '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = input.value.trim();
+    if (!question) return;
+
+    if (firstQuestion) {
+      thread.innerHTML = '';
+      firstQuestion = false;
+    }
+
+    const turn = document.createElement('div');
+    turn.className = 'turn';
+    turn.innerHTML = `
+      <div class="msg-row user">
+        <div class="avatar user">🙂</div>
+        <div class="msg-content">${escapeHtml(question)}</div>
+      </div>
+      <div class="msg-row bot">
+        <div class="avatar bot">🤖</div>
+        <div class="answer-block pending">Searching the index and drafting an answer…</div>
+      </div>
+    `;
+    thread.appendChild(turn);
+    turn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    input.value = '';
+    sendBtn.disabled = true;
+    statusLine.textContent = '';
+    statusLine.className = 'status-line';
+
+    const payload = {
+      question,
+      user_type: getSetting('usertype') || 'clinician',
+      answer_length: getSetting('length') || 'medium',
+      table_format: getSetting('table') || 'auto',
+    };
+
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      const answerEl = turn.querySelector('.answer-block');
+      answerEl.classList.remove('pending');
+      answerEl.innerHTML = renderMarkdown(data.answer);
+
+      if (data.sources && data.sources.length) {
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.className = 'sources-line';
+        sourcesDiv.innerHTML = 'Sources: ' +
+          data.sources.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join(', ');
+        answerEl.appendChild(sourcesDiv);
+      }
+    } catch (err) {
+      const answerEl = turn.querySelector('.answer-block');
+      answerEl.classList.remove('pending');
+      answerEl.textContent = 'Something went wrong while generating the answer.';
+      statusLine.textContent = err.message || 'Request failed.';
+      statusLine.className = 'status-line error';
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+# Environment/config files with secrets
+.env
+.env.*
+config.local.py
+*.key
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Build/dependency folders
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Model/index files (large, regenerable)
+faiss_index/
+models/
+
+# Backup/duplicate files
+main - Copy.py
+*- Copy.py
+*.bak
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs, temp files
+*.log
+*.tmp
