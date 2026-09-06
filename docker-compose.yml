@@ -1,0 +1,36 @@
+services:
+  rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: cmtveda-rag
+
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      RAG_API_KEY: ${RAG_API_KEY}
+      RAG_DOCS_FOLDER: /app/docs
+      RAG_INDEX_FOLDER: /app/faiss_index
+      RAG_GGUF_MODEL_PATH: /app/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+
+      RAG_N_CTX: "4096"
+      RAG_N_THREADS: "2"
+      RAG_TOP_K: "4"
+      RAG_CONTEXT_CHARS_PER_DOC: "1200"
+      RAG_MAX_QUESTION_CHARS: "4000"
+
+    volumes:
+      - ./runtime/docs:/app/docs:ro
+      - ./runtime/faiss_index:/app/faiss_index
+      - ./runtime/models:/app/models:ro
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
