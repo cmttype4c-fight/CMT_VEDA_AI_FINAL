@@ -24,9 +24,9 @@ services:
       RAG_MAX_QUESTION_CHARS: "4000"
 
     volumes:
-      - ./runtime/docs:/app/docs:ro
-      - ./runtime/faiss_index:/app/faiss_index
-      - ./runtime/models:/app/models:ro
+      - ../runtime/docs:/app/docs:ro
+      - ../runtime/faiss_index:/app/faiss_index
+      - ../runtime/models:/app/models:ro
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
